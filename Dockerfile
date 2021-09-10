@@ -42,7 +42,13 @@ RUN \
         ros-galactic-image-view \
         ros-galactic-joint-state-publisher \
         ros-galactic-test-msgs \
-        gazebo11-dbg
+        gazebo11-dbg \
+        python3-pip gedit geany telnet ipython3
+RUN git clone https://github.com/aws-robotics/ros2-launch-file-migrator.git
+RUN cd ros2-launch-file-migrator && pip3 install -e ./ --user && sudo python3 setup.py install
+RUN DEBIAN_FRONTEND=noninteractive pip3 install autopep8 && \
+                                   pip3 install jinja2
+
 
 # RUN cd /home/$username/ycm/build && \
 #     make uninstall && \
@@ -92,16 +98,18 @@ RUN cd /home/$username/gazebo-yarp-plugins/build && \
     make install && \
     chown -R $username: /home/$username/gazebo-yarp-plugins
 
-# RUN cd /home/$username/navigation/build && \
-#     make uninstall && \
-#     cd .. && \
-#     git fetch --all --prune && \
-#     git reset --hard origin/master && \
-#     cd build && \
-#     cmake . -DCMAKE_BUILD_TYPE=Debug && \
-#     make -j4 && \
-#     make install && \
-#     chown -R $username: /home/$username/navigation
+ RUN cd /home/$username/navigation/build && \
+     make uninstall && \
+     cd .. && \
+     git fetch --all --prune && \
+     git reset --hard origin/master && \
+     git remote add elandini84 https://github.com/elandini84/navigation.git && \
+     git fetch elandini84 && \
+     cd build && \
+     cmake . -DCMAKE_BUILD_TYPE=Debug && \
+     make -j4 && \
+     make install && \
+     chown -R $username: /home/$username/navigation
 
 
 # RUN cd /home/$username/idyntree/build && \

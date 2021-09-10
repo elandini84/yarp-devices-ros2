@@ -137,6 +137,8 @@ services:
     <<: *base_ros2
     container_name: ros2_terminator
     command: terminator --no-dbus -T "ROS 2 (galactic)" -i /opt/ros/galactic/share/turtlesim/images/galactic.png
+    volumes:
+      - /home/lando/Data/mntData:/home/user1/mntData
 
 
 volumes:
