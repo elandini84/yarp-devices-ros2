@@ -142,7 +142,10 @@ RUN cd /home/$username/cer-sim && \
     chown -R $username: /home/$username/cer-sim
 
 # Install yarp-ros2
-COPY . /home/$username/yarp-ros2
+RUN cd /home/$username/yarp-ros2 && \
+    git remote add elandini84 https://github.com/elandini84/yarp-ros2.git && \
+    git fetch elandini84 && \
+    git pull origin master
 RUN cd /home/$username/yarp-ros2/ros2_interfaces_ws && \
     bash -c " \
         source /opt/ros/galactic/setup.bash && \
