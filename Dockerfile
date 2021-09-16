@@ -64,6 +64,7 @@ RUN DEBIAN_FRONTEND=noninteractive pip3 install autopep8 && \
 RUN cd /home/$username/yarp/build && \
     make uninstall && \
     cd .. && \
+    git remote add elandini84 https://github.com/elandini84/yarp.git && \
     git fetch --all --prune && \
     git checkout master && \
     git reset --hard origin/master && \
