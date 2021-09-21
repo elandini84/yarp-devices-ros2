@@ -162,6 +162,8 @@ RUN cd /home/$username/yarp-ros2/ros2_interfaces_ws && \
     make install && \
     ln -s compile_commands.json .. && \
     chown -R $username: /home/$username/yarp-ros2
+COPY ./tour-guide-robot /home/user1/tour-guide-robot
+RUN chown -R $username /home/user1/tour-guide-robot
 
 # Fix default ROS image entrypoint (and bug in randaz81/r1slam:ros2)
 RUN sed -i 's|export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/user1/navigation/build/bin|export PATH=\$PATH:\$robotology_install_folder/navigation/build/bin|' /home/$username/.bashrc
