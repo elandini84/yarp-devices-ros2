@@ -42,12 +42,15 @@ RUN \
         ros-galactic-image-view \
         ros-galactic-joint-state-publisher \
         ros-galactic-test-msgs \
+        ros-galactic-filters \
         gazebo11-dbg \
         python3-pip gedit geany telnet ipython3
 RUN git clone https://github.com/aws-robotics/ros2-launch-file-migrator.git
 RUN cd ros2-launch-file-migrator && pip3 install -e ./ --user && sudo python3 setup.py install
-RUN DEBIAN_FRONTEND=noninteractive pip3 install autopep8 && \
-                                   pip3 install jinja2
+#RUN DEBIAN_FRONTEND=noninteractive pip3 install autopep8 && \
+#                                   pip3 install jinja2
+RUN git clone https://github.com/ros-perception/laser_filters.git && \
+    
 
 
 # RUN cd /home/$username/ycm/build && \
@@ -67,6 +70,7 @@ RUN cd /home/$username/yarp/build && \
     git remote add elandini84 https://github.com/elandini84/yarp.git && \
     git fetch --all --prune && \
     git checkout master && \
+    git pull origin master && \
     git reset --hard origin/master && \
     cd build && \
     cmake . -DCMAKE_BUILD_TYPE=Debug && \
@@ -181,3 +185,9 @@ RUN sed -i "s|alias ros2st=\"source /opt/ros/galactic/setup.bash\"|alias ros2st=
 
 USER $username
 WORKDIR /home/$username
+#cp /home/user1/mntData/Navigation_ROS2_R1_SIM.xml /home/user1/tour-guide-robot/app/5gRosNavigation/scripts/
+#cp /home/user1/mntData/map2d_ros2.xml /home/user1/tour-guide-robot/app/5gRosNavigation/conf/robotInterface/
+#cp /home/user1/mntData/localization2Dros2.xml /home/user1/tour-guide-robot/app/5gRosNavigation/conf/robotInterface/
+#cp /home/user1/mntData/*.ini /home/user1/tour-guide-robot/app/5gRosNavigation/conf/
+#cp /home/user1/mntData/amcl_sim.launch.py /home/user1/tour-guide-robot/app/5gRosNavigation/launch/amcl/
+#rm -R build && mkdir build && cd build && cmake .. && make -j8 && sudo make install
