@@ -49,8 +49,7 @@ RUN git clone https://github.com/aws-robotics/ros2-launch-file-migrator.git
 RUN cd ros2-launch-file-migrator && pip3 install -e ./ --user && sudo python3 setup.py install
 #RUN DEBIAN_FRONTEND=noninteractive pip3 install autopep8 && \
 #                                   pip3 install jinja2
-RUN git clone https://github.com/ros-perception/laser_filters.git && \
-    
+RUN git clone https://github.com/ros-perception/laser_filters.git
 
 
 # RUN cd /home/$username/ycm/build && \
