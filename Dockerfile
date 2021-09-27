@@ -32,17 +32,17 @@ RUN \
         && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         ros-galactic-ros1-bridge \
-        ros-galactic-nav2-amcl && \
-        apt install -y ros-galactic-navigation2 \
+        ros-galactic-nav2-amcl \
+        ros-galactic-navigation2 \
         ros-galactic-cyclonedds \
         ros-galactic-control-msgs \
-        ros-galactic-depth-image-proc &&\
-        apt install ros-galactic-image-proc \
+        ros-galactic-depth-image-proc \
+        ros-galactic-image-proc \
         ros-galactic-image-publisher \
-        ros-galactic-image-view &&\
-        apt install ros-galactic-joint-state-publisher \
-        ros-galactic-test-msgs
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y gazebo11-dbg \
+        ros-galactic-image-view \
+        ros-galactic-joint-state-publisher \
+        ros-galactic-test-msgs \
+        gazebo11-dbg \
         python3-pip gedit geany telnet ipython3
 RUN git clone https://github.com/aws-robotics/ros2-launch-file-migrator.git
 RUN cd ros2-launch-file-migrator && pip3 install -e ./ --user && sudo python3 setup.py install
@@ -164,8 +164,8 @@ RUN cd /home/$username/yarp-ros2/ros2_interfaces_ws && \
     make install && \
     ln -s compile_commands.json .. && \
     chown -R $username: /home/$username/yarp-ros2
-COPY ./tour-guide-robot /home/user1/tour-guide-robot
-RUN chown -R $username /home/user1/tour-guide-robot
+#COPY ./tour-guide-robot /home/user1/tour-guide-robot
+#RUN chown -R $username /home/user1/tour-guide-robot
 
 # Fix default ROS image entrypoint (and bug in randaz81/r1slam:ros2)
 RUN sed -i 's|export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/user1/navigation/build/bin|export PATH=\$PATH:\$robotology_install_folder/navigation/build/bin|' /home/$username/.bashrc
