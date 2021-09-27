@@ -32,18 +32,17 @@ RUN \
         && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
         ros-galactic-ros1-bridge \
-        ros-galactic-nav2-amcl \
-        ros-galactic-navigation2 \
+        ros-galactic-nav2-amcl && \
+        apt install -y ros-galactic-navigation2 \
         ros-galactic-cyclonedds \
         ros-galactic-control-msgs \
-        ros-galactic-depth-image-proc \
-        ros-galactic-image-proc \
+        ros-galactic-depth-image-proc &&\
+        apt install ros-galactic-image-proc \
         ros-galactic-image-publisher \
-        ros-galactic-image-view \
-        ros-galactic-joint-state-publisher \
-        ros-galactic-test-msgs \
-        ros-galactic-filters \
-        gazebo11-dbg \
+        ros-galactic-image-view &&\
+        apt install ros-galactic-joint-state-publisher \
+        ros-galactic-test-msgs
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y gazebo11-dbg \
         python3-pip gedit geany telnet ipython3
 RUN git clone https://github.com/aws-robotics/ros2-launch-file-migrator.git
 RUN cd ros2-launch-file-migrator && pip3 install -e ./ --user && sudo python3 setup.py install
