@@ -31,6 +31,7 @@ option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" ON)
 
 option(YARP_ROS2_USE_SYSTEM_map2d_nws_ros2_msgs "If ON, use map2d_nws_ros2_msgs found in the system, otherwise build it with this project." OFF)
 option(YARP_ROS2_USE_SYSTEM_yarp_control_msgs "If ON, use yarp_control_msgs found in the system, otherwise build it with this project." OFF)
+option(YARP_ROS2_USE_SYSTEM_cb_hw_test "If ON, use cb_hw_test found in the system, otherwise build it with this project." OFF)
 
 include(AddInstallRPATHSupport)
 add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
@@ -79,6 +80,12 @@ if(YARP_ROS2_USE_SYSTEM_yarp_control_msgs)
   find_package(yarp_control_msgs REQUIRED)
 else()
   add_subdirectory(ros2_interfaces_ws/src/yarp_control_msgs)
+endif()
+
+if(YARP_ROS2_USE_SYSTEM_cb_hw_test)
+  find_package(cb_hw_test REQUIRED)
+else()
+  add_subdirectory(ros2_components_ws/src/cb_hw_test)
 endif()
 
 add_subdirectory(src)
