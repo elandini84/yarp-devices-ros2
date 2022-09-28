@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(cb_hw_interface)
+project(cb_hw_test)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -18,42 +18,45 @@ find_package(rcutils REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(yarp_control_msgs REQUIRED)
 
-add_library(cb_hw_interface
-SHARED
-src/cb_hw_interface.cpp)
-target_compile_features(cb_hw_interface PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-target_include_directories(cb_hw_interface PUBLIC
+add_library(${PROJECT_NAME}
+  SHARED
+  src/cb_hw_interface.cpp)
+target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_include_directories(${PROJECT_NAME} PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(
-  cb_hw_interface
-  "rclcpp"
-  "control_msgs"
-  "lifecycle_msgs"
-  "pluginlib"
-  "rclcpp_lifecycle"
-  "rcpputils"
-  "rcutils"
-  "hardware_interface"
-  "yarp_control_msgs"
+  ${PROJECT_NAME}
+  hardware_interface
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
+  lifecycle_msgs
+  control_msgs
+  rcpputils
+  rcutils
+  yarp_control_msgs
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 # target_compile_definitions(cb_hw_interface PRIVATE "CB_HW_INTERFACE_BUILDING_LIBRARY")
 
-pluginlib_export_plugin_description_file(cb_hw_interface cb_hw_interface.xml)
+target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
+pluginlib_export_plugin_description_file(${PROJECT_NAME} ${PROJECT_NAME}.xml)
 
 install(
-  DIRECTORY include/
-  DESTINATION include
-)
-install(
-  TARGETS cb_hw_interface
+  TARGETS ${PROJECT_NAME}
+  DESTINATION lib
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+)
+
+install(
+  DIRECTORY include/
+  DESTINATION include
 )
 
 if(BUILD_TESTING)
@@ -72,16 +75,17 @@ ament_export_include_directories(
   include
 )
 ament_export_libraries(
-  cb_hw_interface
+  ${PROJECT_NAME}
 )
 ament_export_targets(
-  export_${PROJECT_NAME}
+ export_${PROJECT_NAME}
 )
 
 ament_export_dependencies(
-        hardware_interface
-        pluginlib
-        rclcpp
+  hardware_interface
+  pluginlib
+  rclcpp
+  rclcpp_lifecycle
 )
 
 ament_package()

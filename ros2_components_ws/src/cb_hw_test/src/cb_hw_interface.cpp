@@ -6,12 +6,12 @@
 #include <string>
 #include <vector>
 
-#include "cb_hw_interface/cb_hw_interface.hpp"
+#include "cb_hw_test/cb_hw_interface.hpp"
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rcutils/logging_macros.h"
 
-namespace cb_hw_interface
+namespace cb_hw_test
 {
 
 CbHwInterface::CbHwInterface()
@@ -490,5 +490,5 @@ bool CbHwInterface::populate_interfaces(
 
 }  // namespace cb_hw_test
 
-#include "pluginlib/class_list_macros.hpp"
-PLUGINLIB_EXPORT_CLASS(cb_hw_interface::CbHwInterface, hardware_interface::SystemInterface)
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(cb_hw_test::CbHwInterface, hardware_interface::SystemInterface)

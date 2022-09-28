@@ -1,5 +1,5 @@
-#ifndef CB_HW_TEST__CB_HW_INTERFACE_HPP_
-#define CB_HW_TEST__CB_HW_INTERFACE_HPP_
+#ifndef CB_HW_TEST__CB_HW_TEST_HPP_
+#define CB_HW_TEST__CB_HW_TEST_HPP_
 
 #include <string>
 #include <vector>
@@ -11,16 +11,16 @@
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include <rclcpp/rclcpp.hpp>
 
-#include "cb_hw_interface/visibility_control.h"
+#include "cb_hw_test/visibility_control.h"
 
 using hardware_interface::return_type;
 
-namespace cb_hw_interface
+namespace cb_hw_test
 {
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
-class HARDWARE_INTERFACE_PUBLIC CbHwInterface : public hardware_interface::SystemInterface
+class CbHwInterface : public hardware_interface::SystemInterface
 {
 public:
   CbHwInterface();
