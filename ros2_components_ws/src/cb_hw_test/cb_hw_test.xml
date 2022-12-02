@@ -1,6 +1,6 @@
 <library path="cb_hw_test">
-    <class name="cb_hw_test/CbHwInterface"
-           type="cb_hw_test::CbHwInterface"
+    <class name="cb_hw_test/CbHwTest"
+           type="cb_hw_test::CbHwTest"
            base_class_type="hardware_interface::SystemInterface">
         <description>
             Hardware interface test for yarp controlBoard

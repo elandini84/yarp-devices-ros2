@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "cb_hw_test/cb_hw_interface.hpp"
+#include "cb_hw_test/cb_hw_test.hpp"
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rcutils/logging_macros.h"
@@ -14,15 +14,15 @@
 namespace cb_hw_test
 {
 
-CbHwInterface::CbHwInterface()
+CbHwTest::CbHwTest()
 {
 }
 
-CbHwInterface::~CbHwInterface()
+CbHwTest::~CbHwTest()
 {
 }
 
-CallbackReturn CbHwInterface::on_init(const hardware_interface::HardwareInfo & info)
+CallbackReturn CbHwTest::on_init(const hardware_interface::HardwareInfo & info)
 {
   if (hardware_interface::SystemInterface::on_init(info) != CallbackReturn::SUCCESS)
   {
@@ -207,7 +207,7 @@ CallbackReturn CbHwInterface::on_init(const hardware_interface::HardwareInfo & i
   return CallbackReturn::SUCCESS;
 }
 
-std::vector<hardware_interface::StateInterface> CbHwInterface::export_state_interfaces()
+std::vector<hardware_interface::StateInterface> CbHwTest::export_state_interfaces()
 {
   std::vector<hardware_interface::StateInterface> state_interfaces;
 
@@ -249,7 +249,7 @@ std::vector<hardware_interface::StateInterface> CbHwInterface::export_state_inte
   return state_interfaces;
 }
 
-std::vector<hardware_interface::CommandInterface> CbHwInterface::export_command_interfaces()
+std::vector<hardware_interface::CommandInterface> CbHwTest::export_command_interfaces()
 {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
 
@@ -311,7 +311,7 @@ std::vector<hardware_interface::CommandInterface> CbHwInterface::export_command_
   return command_interfaces;
 }
 
-return_type CbHwInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
+return_type CbHwTest::read(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
   auto mirror_command_to_state = [](auto & states_, auto commands_, size_t start_index = 0)
   {
@@ -388,7 +388,7 @@ return_type CbHwInterface::read(const rclcpp::Time & /*time*/, const rclcpp::Dur
 
 // Private methods
 template <typename HandleType>
-bool CbHwInterface::get_interface(
+bool CbHwTest::get_interface(
   const std::string & name, const std::vector<std::string> & interface_list,
   const std::string & interface_name, const size_t vector_index,
   std::vector<std::vector<double>> & values, std::vector<HandleType> & interfaces)
@@ -403,7 +403,7 @@ bool CbHwInterface::get_interface(
   return false;
 }
 
-void CbHwInterface::initialize_storage_vectors(
+void CbHwTest::initialize_storage_vectors(
   std::vector<std::vector<double>> & commands, std::vector<std::vector<double>> & states,
   const std::vector<std::string> & interfaces)
 {
@@ -465,7 +465,7 @@ void CbHwInterface::initialize_storage_vectors(
 }
 
 template <typename InterfaceType>
-bool CbHwInterface::populate_interfaces(
+bool CbHwTest::populate_interfaces(
   const std::vector<hardware_interface::ComponentInfo> & components,
   std::vector<std::string> & interface_names, std::vector<std::vector<double>> & storage,
   std::vector<InterfaceType> & target_interfaces, bool using_state_interfaces)
@@ -491,4 +491,4 @@ bool CbHwInterface::populate_interfaces(
 }  // namespace cb_hw_test
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(cb_hw_test::CbHwInterface, hardware_interface::SystemInterface)
+PLUGINLIB_EXPORT_CLASS(cb_hw_test::CbHwTest, hardware_interface::SystemInterface)

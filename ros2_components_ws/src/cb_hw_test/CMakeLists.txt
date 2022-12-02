@@ -20,7 +20,7 @@ find_package(yarp_control_msgs REQUIRED)
 
 add_library(${PROJECT_NAME}
   SHARED
-  src/cb_hw_interface.cpp
+  src/cb_hw_test.cpp
   )
 target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 target_include_directories(

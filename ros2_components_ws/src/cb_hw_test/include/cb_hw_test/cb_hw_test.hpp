@@ -23,12 +23,12 @@ namespace cb_hw_test
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
-class CbHwInterface : public hardware_interface::SystemInterface
+class CbHwTest : public hardware_interface::SystemInterface
 {
 public:
-  RCLCPP_SHARED_PTR_DEFINITIONS(CbHwInterface)
-  CbHwInterface();
-  ~CbHwInterface();
+  RCLCPP_SHARED_PTR_DEFINITIONS(CbHwTest)
+  CbHwTest();
+  ~CbHwTest();
 
   CB_HW_TEST_PUBLIC
   CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
