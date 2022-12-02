@@ -20,11 +20,15 @@ find_package(yarp_control_msgs REQUIRED)
 
 add_library(${PROJECT_NAME}
   SHARED
-  src/cb_hw_interface.cpp)
+  src/cb_hw_interface.cpp
+  )
 target_compile_features(${PROJECT_NAME} PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(
+  ${PROJECT_NAME}
+  PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+  $<INSTALL_INTERFACE:include>
+)
 ament_target_dependencies(
   ${PROJECT_NAME}
   hardware_interface
@@ -40,10 +44,10 @@ ament_target_dependencies(
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-# target_compile_definitions(cb_hw_interface PRIVATE "CB_HW_INTERFACE_BUILDING_LIBRARY")
+target_compile_definitions(${PROJECT_NAME} PRIVATE "CB_HW_TEST_BUILDING_LIBRARY")
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
-pluginlib_export_plugin_description_file(${PROJECT_NAME} ${PROJECT_NAME}.xml)
+#target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
+pluginlib_export_plugin_description_file(hardware_interface ${PROJECT_NAME}.xml)
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -74,9 +78,11 @@ endif()
 ament_export_include_directories(
   include
 )
+
 ament_export_libraries(
   ${PROJECT_NAME}
 )
+
 ament_export_targets(
  export_${PROJECT_NAME}
 )

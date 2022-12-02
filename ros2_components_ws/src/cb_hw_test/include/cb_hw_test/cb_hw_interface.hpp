@@ -9,6 +9,9 @@
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
+#include "rclcpp/macros.hpp"
+#include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
+#include "rclcpp_lifecycle/state.hpp"
 #include <rclcpp/rclcpp.hpp>
 
 #include "cb_hw_test/visibility_control.h"
@@ -23,17 +26,23 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 class CbHwInterface : public hardware_interface::SystemInterface
 {
 public:
+  RCLCPP_SHARED_PTR_DEFINITIONS(CbHwInterface)
   CbHwInterface();
   ~CbHwInterface();
 
+  CB_HW_TEST_PUBLIC
   CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
 
+  CB_HW_TEST_PUBLIC
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 
+  CB_HW_TEST_PUBLIC
   std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
+  CB_HW_TEST_PUBLIC
   return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
+  CB_HW_TEST_PUBLIC
   return_type write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override
   {
     return return_type::OK;
