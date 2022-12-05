@@ -476,6 +476,100 @@ void ControlBoard_nws_ros2::getControlModesCallback(const std::shared_ptr<rmw_re
 }
 
 
+void ControlBoard_nws_ros2::getPositionCallback(const std::shared_ptr<rmw_request_id_t> request_header,
+                                                const std::shared_ptr<yarp_control_msgs::srv::GetPosition::Request> request,
+                                                std::shared_ptr<yarp_control_msgs::srv::GetPosition::Response> response) {
+    std::lock_guard <std::mutex> lg(m_cmdMutex);
+
+    bool noJoints = request->names.size() == 0;
+
+    if(!request){
+        yCError(CONTROLBOARD_ROS2) << "Invalid request";
+        RCLCPP_ERROR(m_node->get_logger(),"Invalid request");
+
+        response->response = "INVALID";
+
+        return;
+    }
+
+    if(!noJoints){
+        if(!namesCheck(request->names)){
+            response->response = "NAMES_ERROR";
+
+            return;
+        }
+    }
+
+    size_t forLimit = noJoints ? m_subdevice_joints : request->names.size();
+    double *tempPos = new double[m_jointNames.size()];
+    std::vector<double> positionsToSend;
+
+    if(!m_iEncodersTimed->getEncoders(tempPos)){
+        yCError(CONTROLBOARD_ROS2) << "Error while retrieving joints positions";
+        RCLCPP_ERROR(m_node->get_logger(),"Error while retrieving joints positions");
+        response->response = "RETRIEVE_ERROR";
+
+        delete tempPos;
+        return;
+    }
+
+    for (size_t i=0; i<forLimit; i++){
+        positionsToSend.push_back(tempPos[noJoints ? i : m_quickJointRef[request->names[i]]]);
+    }
+    response->positions = positionsToSend;
+    response->response = "OK";
+
+    delete tempPos;
+}
+
+
+void ControlBoard_nws_ros2::getVelocityCallback(const std::shared_ptr<rmw_request_id_t> request_header,
+                                                const std::shared_ptr<yarp_control_msgs::srv::GetVelocity::Request> request,
+                                                std::shared_ptr<yarp_control_msgs::srv::GetVelocity::Response> response) {
+    std::lock_guard <std::mutex> lg(m_cmdMutex);
+
+    bool noJoints = request->names.size() == 0;
+
+    if(!request){
+        yCError(CONTROLBOARD_ROS2) << "Invalid request";
+        RCLCPP_ERROR(m_node->get_logger(),"Invalid request");
+
+        response->response = "INVALID";
+
+        return;
+    }
+
+    if(!noJoints){
+        if(!namesCheck(request->names)){
+            response->response = "NAMES_ERROR";
+
+            return;
+        }
+    }
+
+    size_t forLimit = noJoints ? m_subdevice_joints : request->names.size();
+    double *tempVel = new double[m_jointNames.size()];
+    std::vector<double> velocitiesToSend;
+
+    if(!m_iEncodersTimed->getEncoderSpeeds(tempVel)){
+        yCError(CONTROLBOARD_ROS2) << "Error while retrieving joints speeds";
+        RCLCPP_ERROR(m_node->get_logger(),"Error while retrieving joints speeds");
+        response->response = "RETRIEVE_ERROR";
+
+        delete tempVel;
+        return;
+    }
+
+    for (size_t i=0; i<forLimit; i++){
+        velocitiesToSend.push_back(tempVel[noJoints ? i : m_quickJointRef[request->names[i]]]);
+    }
+    response->velocities = velocitiesToSend;
+    response->response = "OK";
+
+    delete tempVel;
+}
+
+
 void ControlBoard_nws_ros2::setControlModesCallback(const std::shared_ptr<rmw_request_id_t> request_header,
                                                     const std::shared_ptr<yarp_control_msgs::srv::SetControlModes::Request> request,
                                                     std::shared_ptr<yarp_control_msgs::srv::SetControlModes::Response> response){
