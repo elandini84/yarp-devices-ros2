@@ -1,5 +1,5 @@
-#ifndef CB_HW_TEST__CB_HW_TEST_HPP_
-#define CB_HW_TEST__CB_HW_TEST_HPP_
+#ifndef CB_HW_IFACE__CB_HW_IFACE_HPP_
+#define CB_HW_IFACE__CB_HW_IFACE_HPP_
 
 #include <string>
 #include <vector>
@@ -16,8 +16,6 @@
 
 //Custom ros2 interfaces
 #include <yarp_control_msgs/srv/get_control_modes.hpp>
-#include <yarp_control_msgs/srv/get_position.hpp>
-#include <yarp_control_msgs/srv/get_velocity.hpp>
 #include <yarp_control_msgs/srv/set_control_modes.hpp>
 #include <yarp_control_msgs/srv/get_available_control_modes.hpp>
 #include <yarp_control_msgs/srv/get_joints_names.hpp>
@@ -27,49 +25,37 @@
 
 #include <mutex>
 
-#include "cb_hw_test/visibility_control.h"
+#include "cb_hw_interface/visibility_control.h"
 
-namespace cb_hw_test {
+namespace cb_hw_interface {
 
 using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn;
 
-class CbHwTest : public hardware_interface::SystemInterface
+class CbHwInterface : public hardware_interface::SystemInterface
 {
 public:
-    RCLCPP_SHARED_PTR_DEFINITIONS(CbHwTest)
-    CbHwTest();
-    ~CbHwTest();
+    RCLCPP_SHARED_PTR_DEFINITIONS(CbHwInterface)
+    CbHwInterface();
+    ~CbHwInterface();
 
     // SystemInterface virtual functions
-    CB_HW_TEST_PUBLIC
+    CB_HW_IFACE_PUBLIC
     CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
 
-    CB_HW_TEST_PUBLIC
+    CB_HW_IFACE_PUBLIC
     std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 
-    CB_HW_TEST_PUBLIC
+    CB_HW_IFACE_PUBLIC
     std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
-    CB_HW_TEST_PUBLIC
-    hardware_interface::return_type prepare_command_mode_switch(const std::vector<std::string> & start_interfaces, const std::vector<std::string> & stop_interfaces) override;
-
-    CB_HW_TEST_PUBLIC
-    return_type perform_command_mode_switch(const std::vector<std::string> & /*start_interfaces*/, const std::vector<std::string> & /*stop_interfaces*/) override;
-
-    CB_HW_TEST_PUBLIC
-    hardware_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State & previous_state) override;
-
-    CB_HW_TEST_PUBLIC
-    hardware_interface::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & previous_state) override;
-
-    CB_HW_TEST_PUBLIC
+    CB_HW_IFACE_PUBLIC
     return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
-    CB_HW_TEST_PUBLIC
+    CB_HW_IFACE_PUBLIC
     return_type write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override;
 
 };
 
-}  // namespace cb_hw_test
+} // namespace cb_hw_interface end
 
-#endif  // CB_HW_TEST__CB_HW_INTERFACE_HPP_
+#endif  // CB_HW_IFACE__CB_HW_IFACE_HPP_
