@@ -35,6 +35,35 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 
 class CbHwTest : public hardware_interface::SystemInterface
 {
+private:
+    std::string  m_nodeName;             // name of the rosNode
+    std::string  m_jointStateTopicName;  // name of the rosTopic
+    std::string  m_msgs_name;
+    std::string  m_posTopicName;
+    std::string  m_velTopicName;
+    std::string  m_getModesClientName;
+    std::string  m_getPositionClientName;
+    std::string  m_getVelocityClientName;
+    std::string  m_setModesClientName;
+    std::string  m_getJointsNamesClientName;
+    std::string  m_getAvailableModesClientName;
+    mutable std::mutex       m_cmdMutex;
+    std::vector<std::string> m_jointNames; // name of the joints
+
+    // Ros2 related attributes
+    Ros2Spinner*            m_spinner{nullptr};
+    rclcpp::Node::SharedPtr m_node;
+    rclcpp::Pubisher<yarp_control_msgs::msg::Position>::SharedPtr               m_posPublisher;
+    rclcpp::Publisher<yarp_control_msgs::msg::Velocity>::SharedPtr              m_velPublisher;
+    rclcpp::Client<yarp_control_msgs::srv::GetJointsNames>::SharedPtr           m_getJointsNamesClient;
+    rclcpp::Client<yarp_control_msgs::srv::GetControlModes>::SharedPtr          m_getControlModesClient;
+    rclcpp::Client<yarp_control_msgs::srv::GetPosition>::SharedPtr              m_getPositionClient;
+    rclcpp::Client<yarp_control_msgs::srv::GetVelocity>::SharedPtr              m_getVelocityClient;
+    rclcpp::Client<yarp_control_msgs::srv::SetControlModes>::SharedPtr          m_setControlModesClient;
+    rclcpp::Client<yarp_control_msgs::srv::GetAvailableControlModes>::SharedPtr m_getAvailableModesClient;
+
+
+
 public:
     RCLCPP_SHARED_PTR_DEFINITIONS(CbHwTest)
     CbHwTest();
