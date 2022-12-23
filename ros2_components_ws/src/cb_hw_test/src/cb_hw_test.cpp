@@ -27,13 +27,33 @@ CbHwTest::~CbHwTest()
 
 bool CbHwTest::_checkJoints(const std::vector<hardware_interface::ComponentInfo>& joints)
 {
+    std::vector<std::string> all_joints;
+    auto namesRequest = std::make_shared<yarp_control_msgs::srv::GetJointsNames::Request>();
+    while (!m_getJointsNamesClient->wait_for_service(1s)) {
+        if (!rclcpp::ok()) {
+            RCLCPP_ERROR(m_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            return false;
+        }
+        RCLCPP_INFO(m_node->get_logger(), "service not available, waiting again...");
+    }
+    auto namesResponse = m_getJointsNamesClient->async_send_request(namesRequest);
+    if(rclcpp::spin_until_future_complete(m_node, namesResponse) == rclcpp::FutureReturnCode::SUCCESS) {
+        RCLCPP_INFO(m_node->get_logger(), "Got joints names");
+        all_joints = namesResponse.get()->names;
+    }
+    else {
+        RCLCPP_ERROR(m_node->get_logger(),"Failed to get joints names");
+        return false;
+    }
+
     for(const auto& joint : joints){
-        if (std::find(m_jointNames.begin(), m_jointNames.end(), joint.name) == m_jointNames.end())
+        if (std::find(all_joints.begin(), all_joints.end(), joint.name) == all_joints.end())
         {
             RCLCPP_FATAL(m_node->get_logger(),"The joint named %s was not found among the available ones",
                          joint.name.c_str());
             return false;
         }
+        m_jointNames.push_back(joint.name);
     }
     return true;
 }
@@ -201,24 +221,6 @@ CallbackReturn CbHwTest::on_init(const hardware_interface::HardwareInfo & info)
         return CallbackReturn::ERROR;
     }
 
-    auto namesRequest = std::make_shared<yarp_control_msgs::srv::GetJointsNames::Request>();
-    while (!m_getJointsNamesClient->wait_for_service(1s)) {
-        if (!rclcpp::ok()) {
-            RCLCPP_ERROR(m_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
-            return CallbackReturn::ERROR;
-        }
-        RCLCPP_INFO(m_node->get_logger(), "service not available, waiting again...");
-    }
-    auto namesResponse = m_getJointsNamesClient->async_send_request(namesRequest);
-    if(rclcpp::spin_until_future_complete(m_node, namesResponse) == rclcpp::FutureReturnCode::SUCCESS) {
-        RCLCPP_INFO(m_node->get_logger(), "Got joints names");
-        m_jointNames = namesResponse.get()->names;
-    }
-    else {
-        RCLCPP_ERROR(m_node->get_logger(),"Failed to get joints names");
-        return CallbackReturn::ERROR;
-    }
-
     return _initExportableInterfaces(info_.joints);
 }
 
@@ -269,69 +271,22 @@ CallbackReturn CbHwTest::on_deactivate(const rclcpp_lifecycle::State & previous_
 
 hardware_interface::return_type CbHwTest::read(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
-    //std::lock_guard <std::mutex> lg(m_cmdMutex);
-
-    // RCLCPP_INFO(m_node->get_logger(), "There we are %f and %f", time.seconds(), period.seconds());
-
-    // // Acquiring the positions of the robot joint
-    // auto positionRequest = std::make_shared<yarp_control_msgs::srv::GetPosition::Request>();
-    // while (!m_getPositionClient->wait_for_service(1s))
-    // {
-    //     if (!rclcpp::ok())
-    //     {
-    //         RCLCPP_ERROR(m_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
-    //         return hardware_interface::return_type::ERROR;
-    //     }
-    //     RCLCPP_INFO(m_node->get_logger(), "service not available, waiting again...");
-    // }
-    // positionRequest->names = m_jointNames;
-    // auto positionResponse = m_getPositionClient->async_send_request(positionRequest);
-    // if(rclcpp::spin_until_future_complete(m_node, positionResponse) == rclcpp::FutureReturnCode::SUCCESS)
-    // {
-    //     auto positions = positionResponse.get()->positions;
-    //     for (size_t i=0; i < positions.size(); i++)
-    //     {
-    //         m_hwStatesPositions[i] = positions[i];
-    //     }
-    //     //RCLCPP_INFO(m_node->get_logger(), "Got positions");
-    // }
-    // else {
-    //     RCLCPP_ERROR(m_node->get_logger(),"Failed to get joints positions");
-    //     return hardware_interface::return_type::ERROR;
-    // }
-
-    // // Acquiring the velocities of the robot joint
-    // auto velocityRequest = std::make_shared<yarp_control_msgs::srv::GetVelocity::Request>();
-    // while (!m_getVelocityClient->wait_for_service(1s))
-    // {
-    //     if (!rclcpp::ok())
-    //     {
-    //         RCLCPP_ERROR(m_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
-    //         return hardware_interface::return_type::ERROR;
-    //     }
-    //     RCLCPP_INFO(m_node->get_logger(), "service not available, waiting again...");
-    // }
-    // velocityRequest->names = m_jointNames;
-    // auto velocityResponse = m_getVelocityClient->async_send_request(velocityRequest);
-    // if(rclcpp::spin_until_future_complete(m_node, velocityResponse) == rclcpp::FutureReturnCode::SUCCESS)
-    // {
-    //     auto velocities = velocityResponse.get()->velocities;
-    //     for (size_t i=0; i < velocities.size(); i++)
-    //     {
-    //         m_hwStatesVelocities[i] = velocities[i];
-    //     }
-    //     //RCLCPP_INFO(m_node->get_logger(), "Got velocities");
-    // }
-    // else {
-    //     RCLCPP_ERROR(m_node->get_logger(),"Failed to get joints velocities");
-    //     return hardware_interface::return_type::ERROR;
-    // }
-
     return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type CbHwTest::write(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
+    // RCLCPP_INFO(m_node->get_logger(), "####################################\n");
+    // for (auto x : m_hwCommandsPositions){
+    //     RCLCPP_INFO(m_node->get_logger(), "Got write: %f",x);
+    // }
+    // RCLCPP_INFO(m_node->get_logger(), "\n####################################");
+    yarp_control_msgs::msg::Position posToSend;
+    posToSend.names = m_jointNames;
+    posToSend.positions = m_hwCommandsPositions;
+
+    m_posPublisher->publish(posToSend);
+
     return hardware_interface::return_type::OK;
 }
 
