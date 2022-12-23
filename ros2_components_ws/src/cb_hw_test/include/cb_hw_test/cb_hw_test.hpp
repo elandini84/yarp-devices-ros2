@@ -36,6 +36,7 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 class CbHwTest : public hardware_interface::SystemInterface
 {
 private:
+    size_t       m_jointsNum{0};
     std::string  m_nodeName;             // name of the rosNode
     std::string  m_jointStateTopicName;  // name of the rosTopic
     std::string  m_msgs_name;
@@ -50,10 +51,21 @@ private:
     mutable std::mutex       m_cmdMutex;
     std::vector<std::string> m_jointNames; // name of the joints
 
+    // State and command interfaces
+    // Store the commands for the simulated robot
+    std::vector<double> m_hwCommandsPositions;
+    std::vector<double> m_hwStatesPositions;
+    std::vector<double> m_hwStatesVelocities;
+
+    std::vector<std::string> m_modes; // Current joints control modes.
+                                      // We have to assume that the joints do not change
+                                      // control mode without this hw interface class knowing.
+                                      // In other words, the only way to switch control mode
+                                      // should be via "perform_command_mode_switch" method.
+
     // Ros2 related attributes
-    Ros2Spinner*            m_spinner{nullptr};
     rclcpp::Node::SharedPtr m_node;
-    rclcpp::Pubisher<yarp_control_msgs::msg::Position>::SharedPtr               m_posPublisher;
+    rclcpp::Publisher<yarp_control_msgs::msg::Position>::SharedPtr               m_posPublisher;
     rclcpp::Publisher<yarp_control_msgs::msg::Velocity>::SharedPtr              m_velPublisher;
     rclcpp::Client<yarp_control_msgs::srv::GetJointsNames>::SharedPtr           m_getJointsNamesClient;
     rclcpp::Client<yarp_control_msgs::srv::GetControlModes>::SharedPtr          m_getControlModesClient;
@@ -62,7 +74,9 @@ private:
     rclcpp::Client<yarp_control_msgs::srv::SetControlModes>::SharedPtr          m_setControlModesClient;
     rclcpp::Client<yarp_control_msgs::srv::GetAvailableControlModes>::SharedPtr m_getAvailableModesClient;
 
-
+    // Internal functions
+    bool _checkJoints(const std::vector<hardware_interface::ComponentInfo>& joints);
+    CallbackReturn _initExportableInterfaces(const std::vector<hardware_interface::ComponentInfo>& joints);
 
 public:
     RCLCPP_SHARED_PTR_DEFINITIONS(CbHwTest)
@@ -83,7 +97,7 @@ public:
     hardware_interface::return_type prepare_command_mode_switch(const std::vector<std::string> & start_interfaces, const std::vector<std::string> & stop_interfaces) override;
 
     CB_HW_TEST_PUBLIC
-    return_type perform_command_mode_switch(const std::vector<std::string> & /*start_interfaces*/, const std::vector<std::string> & /*stop_interfaces*/) override;
+    hardware_interface::return_type perform_command_mode_switch(const std::vector<std::string> & /*start_interfaces*/, const std::vector<std::string> & /*stop_interfaces*/) override;
 
     CB_HW_TEST_PUBLIC
     hardware_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State & previous_state) override;
@@ -92,10 +106,10 @@ public:
     hardware_interface::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & previous_state) override;
 
     CB_HW_TEST_PUBLIC
-    return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
+    hardware_interface::return_type read(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
     CB_HW_TEST_PUBLIC
-    return_type write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override;
+    hardware_interface::return_type write(const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/) override;
 
 };
 
