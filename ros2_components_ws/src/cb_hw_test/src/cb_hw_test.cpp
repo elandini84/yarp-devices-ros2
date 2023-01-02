@@ -134,6 +134,62 @@ CallbackReturn CbHwTest::_initExportableInterfaces(const std::vector<hardware_in
         m_hwStatesVelocities[i++] = 0.0;
     }
 
+    return _getHWCurrentValues();
+}
+
+CallbackReturn CbHwTest::_getHWCurrentValues()
+{
+    auto posRequest = std::make_shared<yarp_control_msgs::srv::GetPosition::Request>();
+    posRequest->names = m_jointNames;
+    while (!m_getPositionClient->wait_for_service(1s)) {
+        if (!rclcpp::ok()) {
+            RCLCPP_ERROR(m_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            return CallbackReturn::ERROR;
+        }
+        RCLCPP_INFO(m_node->get_logger(), "service not available, waiting again...");
+    }
+    auto posFuture = m_getPositionClient->async_send_request(posRequest);
+    auto posResponse = std::make_shared<yarp_control_msgs::srv::GetPosition::Response>();
+    if(rclcpp::spin_until_future_complete(m_node, posFuture) == rclcpp::FutureReturnCode::SUCCESS) {
+        RCLCPP_INFO(m_node->get_logger(), "Got joints positions");
+        posResponse = posFuture.get();
+    }
+    else {
+        RCLCPP_ERROR(m_node->get_logger(),"Failed to get joints positions");
+        return CallbackReturn::ERROR;
+    }
+
+    auto velRequest = std::make_shared<yarp_control_msgs::srv::GetVelocity::Request>();
+    velRequest->names = m_jointNames;
+    while (!m_getVelocityClient->wait_for_service(1s)) {
+        if (!rclcpp::ok()) {
+            RCLCPP_ERROR(m_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            return CallbackReturn::ERROR;
+        }
+        RCLCPP_INFO(m_node->get_logger(), "service not available, waiting again...");
+    }
+    auto velFuture = m_getVelocityClient->async_send_request(velRequest);
+    auto velResponse = std::make_shared<yarp_control_msgs::srv::GetVelocity::Response>();
+    if(rclcpp::spin_until_future_complete(m_node, velFuture) == rclcpp::FutureReturnCode::SUCCESS) {
+        RCLCPP_INFO(m_node->get_logger(), "Got joints velocities");
+        velResponse = velFuture.get();
+    }
+    else {
+        RCLCPP_ERROR(m_node->get_logger(),"Failed to get joints velocities");
+        return CallbackReturn::ERROR;
+    }
+
+    for (size_t i=0; i<m_jointNames.size(); i++)
+    {
+        //RCLCPP_INFO(m_node->get_logger(), "Got position for %s: %f",m_jointNames[i].c_str(),posResponse->positions[i]/M_PI*180.0);
+        m_hwStatesPositions[i] = posResponse->positions[i];
+        m_hwStatesVelocities[i] = velResponse->velocities[i];
+
+        m_hwCommandsPositions[i] = posResponse->positions[i];
+    }
+
+    m_active = true;
+
     return CallbackReturn::SUCCESS;
 }
 
@@ -143,7 +199,7 @@ CallbackReturn CbHwTest::on_init(const hardware_interface::HardwareInfo & info)
     hardware_interface::SystemInterface::on_init(info) !=
     hardware_interface::CallbackReturn::SUCCESS)
     {
-        return hardware_interface::CallbackReturn::ERROR;
+        return CallbackReturn::ERROR;
     }
     /* controllare i giunti in ingresso e verificare che siano tra quelli disponibili tramite il client
      * di getJointNames. A quel punto si espongono solo le interfacce di comando provenienti dall'esterno
@@ -261,11 +317,18 @@ hardware_interface::return_type CbHwTest::perform_command_mode_switch(const std:
 
 CallbackReturn CbHwTest::on_activate(const rclcpp_lifecycle::State & previous_state)
 {
+    if(_getHWCurrentValues() == CallbackReturn::ERROR)
+    {
+        RCLCPP_ERROR(m_node->get_logger(),"Could not successfully read the current joints positions. Check previous errors for more info");
+        return CallbackReturn::ERROR;
+    }
+    m_active = true;
     return CallbackReturn::SUCCESS;
 }
 
 CallbackReturn CbHwTest::on_deactivate(const rclcpp_lifecycle::State & previous_state)
 {
+    m_active = false;
     return CallbackReturn::SUCCESS;
 }
 
@@ -281,6 +344,10 @@ hardware_interface::return_type CbHwTest::write(const rclcpp::Time & time, const
     //     RCLCPP_INFO(m_node->get_logger(), "Got write: %f",x);
     // }
     // RCLCPP_INFO(m_node->get_logger(), "\n####################################");
+    if(!m_active)
+    {
+        return hardware_interface::return_type::OK;
+    }
     yarp_control_msgs::msg::Position posToSend;
     posToSend.names = m_jointNames;
     posToSend.positions = m_hwCommandsPositions;

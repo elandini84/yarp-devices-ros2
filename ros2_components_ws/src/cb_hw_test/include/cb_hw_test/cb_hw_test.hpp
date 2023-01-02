@@ -36,7 +36,7 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 class CbHwTest : public hardware_interface::SystemInterface
 {
 private:
-    size_t       m_jointsNum{0};
+    bool         m_active{false};
     std::string  m_nodeName;             // name of the rosNode
     std::string  m_jointStateTopicName;  // name of the rosTopic
     std::string  m_msgs_name;
@@ -77,6 +77,7 @@ private:
     // Internal functions
     bool _checkJoints(const std::vector<hardware_interface::ComponentInfo>& joints);
     CallbackReturn _initExportableInterfaces(const std::vector<hardware_interface::ComponentInfo>& joints);
+    CallbackReturn _getHWCurrentValues();
 
 public:
     RCLCPP_SHARED_PTR_DEFINITIONS(CbHwTest)
