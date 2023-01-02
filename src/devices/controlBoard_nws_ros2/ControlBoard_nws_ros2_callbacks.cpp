@@ -71,6 +71,12 @@ inline double convertRadiansToDegrees(double degrees)
 {
     return degrees / M_PI * 180.0;
 }
+
+inline double convertDegreesToRadians(double radians)
+{
+    return radians / 180.0 * M_PI;
+}
+
 } // namespace
 
 // UTILITIES ------------------------------------------------------------------------------------------------------------- END //
@@ -513,8 +519,10 @@ void ControlBoard_nws_ros2::getPositionCallback(const std::shared_ptr<rmw_reques
         return;
     }
 
+    double posRad;
     for (size_t i=0; i<forLimit; i++){
-        positionsToSend.push_back(tempPos[noJoints ? i : m_quickJointRef[request->names[i]]]);
+        posRad = convertDegreesToRadians(tempPos[noJoints ? i : m_quickJointRef[request->names[i]]]);
+        positionsToSend.push_back(posRad);
     }
     response->positions = positionsToSend;
     response->response = "OK";
@@ -560,8 +568,10 @@ void ControlBoard_nws_ros2::getVelocityCallback(const std::shared_ptr<rmw_reques
         return;
     }
 
+    double velRad;
     for (size_t i=0; i<forLimit; i++){
-        velocitiesToSend.push_back(tempVel[noJoints ? i : m_quickJointRef[request->names[i]]]);
+        velRad = convertDegreesToRadians(tempVel[noJoints ? i : m_quickJointRef[request->names[i]]]);
+        velocitiesToSend.push_back(velRad);
     }
     response->velocities = velocitiesToSend;
     response->response = "OK";
