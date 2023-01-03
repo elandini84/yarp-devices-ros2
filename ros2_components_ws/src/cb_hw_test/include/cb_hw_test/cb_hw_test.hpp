@@ -37,6 +37,7 @@ class CbHwTest : public hardware_interface::SystemInterface
 {
 private:
     bool         m_active{false};
+    bool         m_continuousPosWrite{true};
     std::string  m_nodeName;             // name of the rosNode
     std::string  m_jointStateTopicName;  // name of the rosTopic
     std::string  m_msgs_name;
@@ -54,6 +55,8 @@ private:
     // State and command interfaces
     // Store the commands for the simulated robot
     std::vector<double> m_hwCommandsPositions;
+    std::vector<double> m_oldPositions; // This array has to be used in order to avoid sending
+                                        // the same position commans over and over
     std::vector<double> m_hwStatesPositions;
     std::vector<double> m_hwStatesVelocities;
 

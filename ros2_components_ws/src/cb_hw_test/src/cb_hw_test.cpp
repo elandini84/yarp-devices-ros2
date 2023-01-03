@@ -66,6 +66,7 @@ CallbackReturn CbHwTest::_initExportableInterfaces(const std::vector<hardware_in
         return CallbackReturn::ERROR;
     }
     m_hwCommandsPositions.resize(joints.size(), std::numeric_limits<double>::quiet_NaN());
+    m_oldPositions.resize(joints.size(), std::numeric_limits<double>::quiet_NaN());
     m_hwStatesPositions.resize(joints.size(), std::numeric_limits<double>::quiet_NaN());
     m_hwStatesVelocities.resize(joints.size(), std::numeric_limits<double>::quiet_NaN());
     size_t i=0;
@@ -130,6 +131,7 @@ CallbackReturn CbHwTest::_initExportableInterfaces(const std::vector<hardware_in
         }
 
         m_hwCommandsPositions[i] = 0.0;
+        m_oldPositions[i] = 0.0;
         m_hwStatesPositions[i] = 0.0;
         m_hwStatesVelocities[i++] = 0.0;
     }
@@ -186,6 +188,7 @@ CallbackReturn CbHwTest::_getHWCurrentValues()
         m_hwStatesVelocities[i] = velResponse->velocities[i];
 
         m_hwCommandsPositions[i] = posResponse->positions[i];
+        m_oldPositions[i] = posResponse->positions[i];
     }
 
     m_active = true;
@@ -217,9 +220,15 @@ CallbackReturn CbHwTest::on_init(const hardware_interface::HardwareInfo & info)
         RCLCPP_FATAL(rclcpp::get_logger("CbHwTest"),"No msgs name for the controlBoard_nws_ros2 specified");
         return CallbackReturn::ERROR;
     }
+    if(info.hardware_parameters.count("continuous_pos_write")<=0)
+    {
+        RCLCPP_FATAL(rclcpp::get_logger("CbHwTest"),"No flag for the position continuous writing");
+        return CallbackReturn::ERROR;
+    }
 
-    m_nodeName = std::string(info_.hardware_parameters["node_name"].c_str());
+    m_nodeName = info_.hardware_parameters["node_name"];
     m_msgs_name = info_.hardware_parameters["cb_nws_msgs_name"];
+    m_continuousPosWrite = info_.hardware_parameters["continuous_pos_write"]==std::string("true") || info_.hardware_parameters["continuous_pos_write"]==std::string("True");
 
     m_node = rclcpp::Node::make_shared(m_nodeName);
 
@@ -348,11 +357,17 @@ hardware_interface::return_type CbHwTest::write(const rclcpp::Time & time, const
     {
         return hardware_interface::return_type::OK;
     }
+    else if(m_hwCommandsPositions == m_oldPositions && !m_continuousPosWrite)
+    {
+        //RCLCPP_INFO(m_node->get_logger(), "No changes in the stored command values. Skipping");
+        return hardware_interface::return_type::OK;
+    }
     yarp_control_msgs::msg::Position posToSend;
     posToSend.names = m_jointNames;
     posToSend.positions = m_hwCommandsPositions;
 
     m_posPublisher->publish(posToSend);
+    m_oldPositions = m_hwCommandsPositions;
 
     return hardware_interface::return_type::OK;
 }
