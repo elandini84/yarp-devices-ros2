@@ -1,0 +1,9 @@
+<library path="cb_hw_fw_generic">
+    <class name="cb_hw_fw_generic/CbHwFwGeneric"
+           type="cb_hw_fw_generic::CbHwFwGeneric"
+           base_class_type="hardware_interface::SystemInterface">
+        <description>
+            Hardware interface only for forwarding commands to yarp controlBoard
+        </description>
+    </class>
+</library>
