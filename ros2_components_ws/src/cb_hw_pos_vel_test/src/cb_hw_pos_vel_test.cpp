@@ -25,6 +25,12 @@ CbHwPosVelTest::~CbHwPosVelTest()
 {
 }
 
+void CbHwPosVelTest::_jointsStatesCallback(const sensor_msgs::msg::JointState::SharedPtr msg)
+{
+    std::lock_guard<std::mutex> dataGuard(m_dataMutex);
+    m_currentJointsStates = *msg;
+}
+
 bool CbHwPosVelTest::_checkJoints(const std::vector<hardware_interface::ComponentInfo>& joints)
 {
     std::vector<std::string> all_joints;
@@ -46,6 +52,7 @@ bool CbHwPosVelTest::_checkJoints(const std::vector<hardware_interface::Componen
         return false;
     }
 
+    size_t ind = 0;
     for(const auto& joint : joints){
         if (std::find(all_joints.begin(), all_joints.end(), joint.name) == all_joints.end())
         {
@@ -54,7 +61,35 @@ bool CbHwPosVelTest::_checkJoints(const std::vector<hardware_interface::Componen
             return false;
         }
         m_jointNames.push_back(joint.name);
+        m_jointsIndexes.push_back(ind++);
     }
+
+    auto modeRequest = std::make_shared<yarp_control_msgs::srv::GetControlModes::Request>();
+    while (!m_getControlModesClient->wait_for_service(1s)) {
+        if (!rclcpp::ok()) {
+            RCLCPP_ERROR(m_node->get_logger(), "Interrupted while waiting for the service. Exiting.");
+            return false;
+        }
+        RCLCPP_INFO(m_node->get_logger(), "service not available, waiting again...");
+    }
+    modeRequest->names = m_jointNames;
+    auto modeFuture = m_getControlModesClient->async_send_request(modeRequest);
+    if(rclcpp::spin_until_future_complete(m_node, modeFuture) == rclcpp::FutureReturnCode::SUCCESS) {
+        auto modeResponse = modeFuture.get();
+        for(size_t i=0; i<m_jointNames.size(); i++)
+        {
+            if(modeResponse->modes[i] != "POSITION")
+            {
+                RCLCPP_ERROR(m_node->get_logger(), "Joint %s in not in control mode POSITION. Check your configuration and, if possible, change the joint control mode",m_jointNames[i].c_str());
+                return false;
+            }
+        }
+    }
+    else {
+        RCLCPP_ERROR(m_node->get_logger(),"Failed to get joints control modes");
+        return false;
+    }
+
     return true;
 }
 
@@ -66,6 +101,8 @@ CallbackReturn CbHwPosVelTest::_initExportableInterfaces(const std::vector<hardw
         return CallbackReturn::ERROR;
     }
     m_hwCommandsPositions.resize(joints.size(), std::numeric_limits<double>::quiet_NaN());
+    m_hwStatesPositions.resize(joints.size(), std::numeric_limits<double>::quiet_NaN());
+    m_hwStatesVelocities.resize(joints.size(), std::numeric_limits<double>::quiet_NaN());
     m_oldPositions.resize(joints.size(), std::numeric_limits<double>::quiet_NaN());
     size_t i=0;
 
@@ -88,7 +125,45 @@ CallbackReturn CbHwPosVelTest::_initExportableInterfaces(const std::vector<hardw
             return CallbackReturn::ERROR;
         }
 
+        if (joint.state_interfaces.size() > 2)
+        {
+            RCLCPP_FATAL(
+                m_node->get_logger(),
+                "Joint '%s' has %zu state interface. 2 maximum expected.", joint.name.c_str(),
+                joint.state_interfaces.size());
+            return CallbackReturn::ERROR;
+        }
+
+        if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION &&
+            joint.state_interfaces[1].name != hardware_interface::HW_IF_POSITION)
+        {
+            RCLCPP_FATAL(
+                m_node->get_logger(),
+                "Joint '%s' has no %s state interface. Check your configuration", joint.name.c_str(),
+                hardware_interface::HW_IF_POSITION);
+            return CallbackReturn::ERROR;
+        }
+        if (joint.state_interfaces[0].name != hardware_interface::HW_IF_VELOCITY &&
+            joint.state_interfaces[1].name != hardware_interface::HW_IF_VELOCITY)
+        {
+            RCLCPP_FATAL(
+                m_node->get_logger(),
+                "Joint '%s' has no %s state interface. Check your configuration", joint.name.c_str(),
+                hardware_interface::HW_IF_VELOCITY);
+            return CallbackReturn::ERROR;
+        }
+        if (joint.state_interfaces[0].name == joint.state_interfaces[1].name)
+        {
+            RCLCPP_FATAL(
+                m_node->get_logger(),
+                "Joint '%s' has two equal state interfaces. This is not allowed. Check your configuration",
+                joint.name.c_str());
+            return CallbackReturn::ERROR;
+        }
+
         m_hwCommandsPositions[i] = 0.0;
+        m_hwStatesPositions[i] = 0.0;
+        m_hwStatesVelocities[i] = 0.0;
         m_oldPositions[i++] = 0.0;
     }
 
@@ -136,12 +211,7 @@ CallbackReturn CbHwPosVelTest::on_init(const hardware_interface::HardwareInfo & 
     {
         return CallbackReturn::ERROR;
     }
-    /* controllare i giunti in ingresso e verificare che siano tra quelli disponibili tramite il client
-     * di getJointNames. A quel punto si espongono solo le interfacce di comando provenienti dall'esterno
-     * tramite il parametro "info".
-     * Le interfacce attive saranno quelle corrispondenti ai control mode dei vari giunti.
-     * Come si controlla sta cosa? Boh...
-     */
+
     if(info.hardware_parameters.count("node_name")<=0)
     {
         RCLCPP_FATAL(rclcpp::get_logger("CbHwPosVelTest"),"No node name specified");
@@ -167,9 +237,7 @@ CallbackReturn CbHwPosVelTest::on_init(const hardware_interface::HardwareInfo & 
     // Initialize topics and services names ------------------------------------------------------------------- //
     m_posTopicName = m_msgs_name+"/position";
     m_getModesClientName = m_msgs_name+"/get_modes";
-    m_setModesClientName = m_msgs_name+"/set_modes";
     m_getPositionClientName = m_msgs_name+"/get_position";
-    m_getAvailableModesClientName = m_msgs_name+"/get_available_modes";
     m_getJointsNamesClientName = m_msgs_name+"/get_joints_names";
 
     // Initialize publishers ---------------------------------------------------------------------------------- //
@@ -195,16 +263,6 @@ CallbackReturn CbHwPosVelTest::on_init(const hardware_interface::HardwareInfo & 
         RCLCPP_ERROR(m_node->get_logger(),"Could not initialize the GetPosition service client");
         return CallbackReturn::ERROR;
     }
-    m_setControlModesClient = m_node->create_client<yarp_control_msgs::srv::SetControlModes>(m_setModesClientName);
-    if(!m_setControlModesClient){
-        RCLCPP_ERROR(m_node->get_logger(),"Could not initialize the SetControlModes service client");
-        return CallbackReturn::ERROR;
-    }
-    m_getAvailableModesClient = m_node->create_client<yarp_control_msgs::srv::GetAvailableControlModes>(m_getAvailableModesClientName);
-    if(!m_getAvailableModesClient){
-        RCLCPP_ERROR(m_node->get_logger(),"Could not initialize the GetAvailableControlModes service client");
-        return CallbackReturn::ERROR;
-    }
 
     return _initExportableInterfaces(info_.joints);
 }
@@ -212,6 +270,13 @@ CallbackReturn CbHwPosVelTest::on_init(const hardware_interface::HardwareInfo & 
 std::vector<hardware_interface::StateInterface> CbHwPosVelTest::export_state_interfaces()
 {
     std::vector<hardware_interface::StateInterface> ifacesToReturn;
+    for (size_t i=0; i<m_hwStatesPositions.size(); i++){
+        ifacesToReturn.emplace_back(hardware_interface::StateInterface(
+            info_.joints[i].name, hardware_interface::HW_IF_POSITION, &m_hwStatesPositions[i]));
+        ifacesToReturn.emplace_back(hardware_interface::StateInterface(
+            info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &m_hwStatesVelocities[i]));
+    }
+
     return ifacesToReturn;
 }
 
@@ -256,16 +321,17 @@ CallbackReturn CbHwPosVelTest::on_deactivate(const rclcpp_lifecycle::State & pre
 
 hardware_interface::return_type CbHwPosVelTest::read(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
+    std::lock_guard<std::mutex> dataGuard(m_dataMutex);
+    for(size_t i=0; i<m_jointsIndexes.size(); i++)
+    {
+        m_hwStatesPositions[i] = m_currentJointsStates.position[m_jointsIndexes[i]];
+        m_hwStatesVelocities[i] = m_currentJointsStates.velocity[m_jointsIndexes[i]];
+    }
     return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type CbHwPosVelTest::write(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
-    // RCLCPP_INFO(m_node->get_logger(), "####################################\n");
-    // for (auto x : m_hwCommandsPositions){
-    //     RCLCPP_INFO(m_node->get_logger(), "Got write: %f",x);
-    // }
-    // RCLCPP_INFO(m_node->get_logger(), "\n####################################");
     if(!m_active)
     {
         return hardware_interface::return_type::OK;
