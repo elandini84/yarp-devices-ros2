@@ -38,10 +38,11 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 class CbHwPosVelTest : public hardware_interface::SystemInterface
 {
 private:
-    bool         m_active{false};
-    bool         m_continuousPosWrite{true};
-    std::string  m_nodeName;             // name of the rosNode
-    std::string  m_msgs_name;            // prefix for control_board_nws_ros2 services and topics
+    bool          m_active{false};
+    bool          m_continuousPosWrite{true};
+    std::string   m_nodeName;             // name of the rosNode
+    std::string   m_msgs_name;            // prefix for control_board_nws_ros2 services and topics
+    std::thread*  m_spinThread{nullptr};
     // ControlBoard_nws_ros2 related topics and services names
     std::string  m_jointStatesTopicName;         // Topic for joint states
     std::string  m_posTopicName;                 // Position commands topic

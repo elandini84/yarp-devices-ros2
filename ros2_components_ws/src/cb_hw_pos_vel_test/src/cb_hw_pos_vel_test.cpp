@@ -23,6 +23,10 @@ CbHwPosVelTest::CbHwPosVelTest()
 
 CbHwPosVelTest::~CbHwPosVelTest()
 {
+    rclcpp::shutdown();
+    m_spinThread->join();
+
+    delete m_spinThread;
 }
 
 void CbHwPosVelTest::_jointsStatesCallback(const sensor_msgs::msg::JointState::SharedPtr msg)
@@ -263,6 +267,8 @@ CallbackReturn CbHwPosVelTest::on_init(const hardware_interface::HardwareInfo & 
         RCLCPP_ERROR(m_node->get_logger(),"Could not initialize the GetPosition service client");
         return CallbackReturn::ERROR;
     }
+
+    m_spinThread = new std::thread([this](){rclcpp::spin(m_node);});
 
     return _initExportableInterfaces(info_.joints);
 }
