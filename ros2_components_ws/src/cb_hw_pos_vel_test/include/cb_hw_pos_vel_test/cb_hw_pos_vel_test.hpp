@@ -27,6 +27,8 @@
 #include <yarp_control_msgs/msg/velocity.hpp>
 #include <yarp_control_msgs/msg/position_direct.hpp>
 
+#include <joint_states_client/joint_states_client.hpp>
+
 #include <mutex>
 
 #include "cb_hw_pos_vel_test/visibility_control.h"
@@ -38,21 +40,22 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 class CbHwPosVelTest : public hardware_interface::SystemInterface
 {
 private:
-    bool          m_active{false};
-    bool          m_continuousPosWrite{true};
-    std::string   m_nodeName;             // name of the rosNode
-    std::string   m_msgs_name;            // prefix for control_board_nws_ros2 services and topics
-    std::thread*  m_spinThread{nullptr};
+    bool                                                        m_active{false};
+    bool                                                        m_gotSomeData{false};
+    bool                                                        m_continuousPosWrite{true};
+    std::string                                                 m_nodeName;             // name of the rosNode
+    std::string                                                 m_msgs_name;            // prefix for control_board_nws_ros2 services and topics
+    mutable std::mutex                                          m_cmdMutex;
+    std::vector<std::string>                                    m_jointNames; // name of the joints
+    std::vector<size_t>                                         m_jointsIndexes; // the indexes of the involved joints involved
+    rclcpp::executors::SingleThreadedExecutor                   m_executor;
+    std::shared_ptr<yarp_devices_ros2_utils::JointStatesClient> m_jointStatesClient;
+
     // ControlBoard_nws_ros2 related topics and services names
-    std::string  m_jointStatesTopicName;         // Topic for joint states
     std::string  m_posTopicName;                 // Position commands topic
     std::string  m_getModesClientName;           // Service client for joints current control modes
     std::string  m_getPositionClientName;        // Service client to get current position values
     std::string  m_getJointsNamesClientName;     // Service client to get the available joints names
-    mutable std::mutex       m_cmdMutex;
-    mutable std::mutex       m_dataMutex;
-    std::vector<size_t>      m_jointsIndexes; // the indexes of the involved joints involved
-    std::vector<std::string> m_jointNames; // name of the joints
 
     // Command and state interfaces
     // Store the commands for the robot
@@ -66,13 +69,11 @@ private:
                                           // control mode without this hw interface class knowing.
                                           // In other words, the only way to switch control mode
                                           // should be via "perform_command_mode_switch" method.
-    sensor_msgs::msg::JointState m_currentJointsStates;
 
     // Ros2 related attributes
     rclcpp::Node::SharedPtr m_node;
 
     //  yarp_control_msgs clients and publisher
-    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr       m_jointStateTopic;
     rclcpp::Publisher<yarp_control_msgs::msg::Position>::SharedPtr      m_posPublisher;
     rclcpp::Client<yarp_control_msgs::srv::GetJointsNames>::SharedPtr   m_getJointsNamesClient;
     rclcpp::Client<yarp_control_msgs::srv::GetControlModes>::SharedPtr  m_getControlModesClient;
@@ -82,7 +83,6 @@ private:
     bool _checkJoints(const std::vector<hardware_interface::ComponentInfo>& joints);
     CallbackReturn _initExportableInterfaces(const std::vector<hardware_interface::ComponentInfo>& joints);
     CallbackReturn _getHWCurrentValues();
-    void _jointsStatesCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
 public:
     RCLCPP_SHARED_PTR_DEFINITIONS(CbHwPosVelTest)
@@ -99,11 +99,13 @@ public:
     CB_HW_POS_VEL_TEST_PUBLIC
     std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
+    /*
     CB_HW_POS_VEL_TEST_PUBLIC
     hardware_interface::return_type prepare_command_mode_switch(const std::vector<std::string> & start_interfaces, const std::vector<std::string> & stop_interfaces) override;
 
     CB_HW_POS_VEL_TEST_PUBLIC
-    hardware_interface::return_type perform_command_mode_switch(const std::vector<std::string> & /*start_interfaces*/, const std::vector<std::string> & /*stop_interfaces*/) override;
+    hardware_interface::return_type perform_command_mode_switch(const std::vector<std::string> & start_interfaces, const std::vector<std::string> & stop_interfaces) override;
+    */
 
     CB_HW_POS_VEL_TEST_PUBLIC
     hardware_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State & previous_state) override;

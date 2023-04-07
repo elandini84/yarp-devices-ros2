@@ -13,6 +13,7 @@
 #include "rcutils/logging_macros.h"
 
 using namespace std::chrono_literals;
+using namespace std::placeholders;
 
 namespace cb_hw_pos_vel_test
 {
@@ -24,15 +25,9 @@ CbHwPosVelTest::CbHwPosVelTest()
 CbHwPosVelTest::~CbHwPosVelTest()
 {
     rclcpp::shutdown();
-    m_spinThread->join();
+    //m_spinThread->join();
 
-    delete m_spinThread;
-}
-
-void CbHwPosVelTest::_jointsStatesCallback(const sensor_msgs::msg::JointState::SharedPtr msg)
-{
-    std::lock_guard<std::mutex> dataGuard(m_dataMutex);
-    m_currentJointsStates = *msg;
+    //delete m_spinThread;
 }
 
 bool CbHwPosVelTest::_checkJoints(const std::vector<hardware_interface::ComponentInfo>& joints)
@@ -231,9 +226,17 @@ CallbackReturn CbHwPosVelTest::on_init(const hardware_interface::HardwareInfo & 
         RCLCPP_FATAL(rclcpp::get_logger("CbHwPosVelTest"),"No flag for the position continuous writing");
         return CallbackReturn::ERROR;
     }
+    if(info.hardware_parameters.count("joint_states_topic")<=0)
+    {
+        RCLCPP_FATAL(rclcpp::get_logger("CbHwPosVelTest"),"No name for the joints states topic");
+        return CallbackReturn::ERROR;
+    }
+
+    //joint_states
 
     m_nodeName = info_.hardware_parameters["node_name"];
     m_msgs_name = info_.hardware_parameters["cb_nws_msgs_name"];
+    std::string jointStatesTopicName = info_.hardware_parameters["joint_states_topic"];
     m_continuousPosWrite = info_.hardware_parameters["continuous_pos_write"]==std::string("true") || info_.hardware_parameters["continuous_pos_write"]==std::string("True");
 
     m_node = rclcpp::Node::make_shared(m_nodeName);
@@ -268,7 +271,12 @@ CallbackReturn CbHwPosVelTest::on_init(const hardware_interface::HardwareInfo & 
         return CallbackReturn::ERROR;
     }
 
-    m_spinThread = new std::thread([this](){rclcpp::spin(m_node);});
+    // JointStatesClient initialization ----------------------------------------------------------------------- //
+    m_jointStatesClient = std::make_shared<yarp_devices_ros2_utils::JointStatesClient>("joints_"+m_nodeName,jointStatesTopicName);
+    m_executor.add_node(m_jointStatesClient);
+    std::thread([this]() { m_executor.spin(); }).detach();
+
+    //m_spinThread = new std::thread([this](){rclcpp::spin(m_node);});
 
     return _initExportableInterfaces(info_.joints);
 }
@@ -298,6 +306,7 @@ std::vector<hardware_interface::CommandInterface> CbHwPosVelTest::export_command
     return ifacesToReturn;
 }
 
+/*
 hardware_interface::return_type CbHwPosVelTest::prepare_command_mode_switch(const std::vector<std::string> & start_interfaces, const std::vector<std::string> & stop_interfaces)
 {
     return hardware_interface::return_type::OK;
@@ -307,6 +316,7 @@ hardware_interface::return_type CbHwPosVelTest::perform_command_mode_switch(cons
 {
     return hardware_interface::return_type::OK;
 }
+*/
 
 CallbackReturn CbHwPosVelTest::on_activate(const rclcpp_lifecycle::State & previous_state)
 {
@@ -327,12 +337,17 @@ CallbackReturn CbHwPosVelTest::on_deactivate(const rclcpp_lifecycle::State & pre
 
 hardware_interface::return_type CbHwPosVelTest::read(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
-    std::lock_guard<std::mutex> dataGuard(m_dataMutex);
-    for(size_t i=0; i<m_jointsIndexes.size(); i++)
+    if(!m_jointStatesClient->getPositions(m_jointNames,m_hwStatesPositions))
     {
-        m_hwStatesPositions[i] = m_currentJointsStates.position[m_jointsIndexes[i]];
-        m_hwStatesVelocities[i] = m_currentJointsStates.velocity[m_jointsIndexes[i]];
+        RCLCPP_ERROR(m_node->get_logger(),"Could not successfully read the current joints positions. Check previous errors for more info");
+        return hardware_interface::return_type::ERROR;
     }
+    if(!m_jointStatesClient->getVelocities(m_jointNames,m_hwStatesVelocities))
+    {
+        RCLCPP_ERROR(m_node->get_logger(),"Could not successfully read the current joints positions. Check previous errors for more info");
+        return hardware_interface::return_type::ERROR;
+    }
+
     return hardware_interface::return_type::OK;
 }
 

@@ -17,6 +17,7 @@ find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(yarp_control_msgs REQUIRED)
+find_package(joint_states_client REQUIRED)
 
 add_library(${PROJECT_NAME}
   SHARED
@@ -40,6 +41,7 @@ ament_target_dependencies(
   rcpputils
   rcutils
   yarp_control_msgs
+  joint_states_client
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,
