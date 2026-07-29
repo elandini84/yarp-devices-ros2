@@ -285,13 +285,13 @@ bool ControlBoard_nws_ros2::setDevice(yarp::dev::DeviceDriver* driver)
     }
 
     // Get the number of controlled joints
-    int tmp_axes;
-    if (!m_iEncodersTimed->getAxes(&tmp_axes)) {
+    size_t tmp_axes=0;
+    if (!m_iEncodersTimed->getAxes(tmp_axes)) {
         yCError(CONTROLBOARD_ROS2, "<%s - %s>: Failed to get axes number for attached device ",  m_node_name.c_str(), m_topic_name.c_str());
         return false;
     }
-    if (tmp_axes <= 0) {
-        yCError(CONTROLBOARD_ROS2, "<%s - %s>: attached device has an invalid number of joints (%d)",  m_node_name.c_str(), m_topic_name.c_str(), tmp_axes);
+    if (tmp_axes == 0) {
+        yCError(CONTROLBOARD_ROS2, "<%s - %s>: attached device has an invalid number of joints (%ld)",  m_node_name.c_str(), m_topic_name.c_str(), tmp_axes);
         return false;
     }
     m_subdevice_joints = static_cast<size_t>(tmp_axes);
