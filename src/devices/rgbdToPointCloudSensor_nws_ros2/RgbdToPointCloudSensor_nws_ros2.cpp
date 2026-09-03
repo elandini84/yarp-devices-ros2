@@ -167,7 +167,7 @@ bool RgbdToPointCloudSensor_nws_ros2::writeData()
 
     static Stamp oldColorStamp = Stamp(0, 0);
     static Stamp oldDepthStamp = Stamp(0, 0);
-    yarp::os::Property propIntrinsic;
+    yarp::sig::IntrinsicParams intrinsics;
     bool rgb_data_ok = true;
     bool depth_data_ok = true;
     bool intrinsic_ok = false;
@@ -183,14 +183,13 @@ bool RgbdToPointCloudSensor_nws_ros2::writeData()
     } else {
         oldDepthStamp = depthStamp;
     }
-    intrinsic_ok = m_sensor_p->getRgbIntrinsicParam(propIntrinsic);
+    intrinsic_ok = m_sensor_p->getRgbIntrinsicParam(intrinsics);
 
 
     // TBD: We should check here somehow if the timestamp was correctly updated and, if not, update it ourselves.
     if (rgb_data_ok && m_rosPublisher_pointCloud2->get_subscription_count() > 0) {
         if (depth_data_ok) {
             if (intrinsic_ok) {
-                yarp::sig::IntrinsicParams intrinsics(propIntrinsic);
                 yarp::sig::ImageOf<yarp::sig::PixelRgb> colorImagePixelRGB;
                 colorImagePixelRGB.setExternal(colorImage.getRawImage(), colorImage.width(), colorImage.height());
                 // create point cloud in yarp format
