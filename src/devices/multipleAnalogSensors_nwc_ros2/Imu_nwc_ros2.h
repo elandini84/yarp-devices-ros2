@@ -10,6 +10,7 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include <yarp/dev/ReturnValue.h>
 
 /**
  * @ingroup dev_impl_nwc_ros2
@@ -41,25 +42,25 @@ protected:
     void subscription_callback(const std::shared_ptr<sensor_msgs::msg::Imu> msg) override;
 public:
     /* IThreeAxisLinearAccelerometers methods */
-    size_t getNrOfThreeAxisLinearAccelerometers() const override;
+    yarp::dev::ReturnValue getNrOfThreeAxisLinearAccelerometers(size_t& nr) const override;
     yarp::dev::MAS_status getThreeAxisLinearAccelerometerStatus(size_t sens_index) const override;
-    bool getThreeAxisLinearAccelerometerName(size_t sens_index, std::string &name) const override;
-    bool getThreeAxisLinearAccelerometerFrameName(size_t sens_index, std::string &frameName) const override;
-    bool getThreeAxisLinearAccelerometerMeasure(size_t sens_index, yarp::sig::Vector& out, double& timestamp) const override;
+    yarp::dev::ReturnValue getThreeAxisLinearAccelerometerName(size_t sens_index, std::string &name) const override;
+    yarp::dev::ReturnValue getThreeAxisLinearAccelerometerFrameName(size_t sens_index, std::string &frameName) const override;
+    yarp::dev::ReturnValue getThreeAxisLinearAccelerometerMeasure(size_t sens_index, yarp::sig::Vector& out, double& timestamp) const override;
 
     /* IThreeAxisGyroscopes methods */
-    size_t getNrOfThreeAxisGyroscopes() const override;
+    yarp::dev::ReturnValue getNrOfThreeAxisGyroscopes(size_t& nr) const override;
     yarp::dev::MAS_status getThreeAxisGyroscopeStatus(size_t sens_index) const override;
-    bool getThreeAxisGyroscopeName(size_t sens_index, std::string &name) const override;
-    bool getThreeAxisGyroscopeFrameName(size_t sens_index, std::string &frameName) const override;
-    bool getThreeAxisGyroscopeMeasure(size_t sens_index, yarp::sig::Vector& out, double& timestamp) const override;
+    yarp::dev::ReturnValue getThreeAxisGyroscopeName(size_t sens_index, std::string &name) const override;
+    yarp::dev::ReturnValue getThreeAxisGyroscopeFrameName(size_t sens_index, std::string &frameName) const override;
+    yarp::dev::ReturnValue getThreeAxisGyroscopeMeasure(size_t sens_index, yarp::sig::Vector& out, double& timestamp) const override;
 
     /* IOrientationSensors methods */
-    size_t getNrOfOrientationSensors() const override;
+    yarp::dev::ReturnValue getNrOfOrientationSensors(size_t& nr) const override;
     yarp::dev::MAS_status getOrientationSensorStatus(size_t sens_index) const override;
-    bool getOrientationSensorName(size_t sens_index, std::string &name) const override;
-    bool getOrientationSensorFrameName(size_t sens_index, std::string &frameName) const override;
-    bool getOrientationSensorMeasureAsRollPitchYaw(size_t sens_index, yarp::sig::Vector& rpy, double& timestamp) const override;
+    yarp::dev::ReturnValue getOrientationSensorName(size_t sens_index, std::string &name) const override;
+    yarp::dev::ReturnValue getOrientationSensorFrameName(size_t sens_index, std::string &frameName) const override;
+    yarp::dev::ReturnValue getOrientationSensorMeasureAsRollPitchYaw(size_t sens_index, yarp::sig::Vector& rpy, double& timestamp) const override;
 };
 
 #endif // YARP_DEV_IMU_NWC_ROS2_H

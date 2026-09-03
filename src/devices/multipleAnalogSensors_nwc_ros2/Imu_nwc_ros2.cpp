@@ -25,7 +25,7 @@ void Imu_nwc_ros2::subscription_callback(const std::shared_ptr<sensor_msgs::msg:
 }
 
 // IThreeAxisLinearAccelerometers ------------------------------------------------------------------------------------------------- START //
-bool Imu_nwc_ros2::getThreeAxisLinearAccelerometerMeasure(size_t sens_index, yarp::sig::Vector& out, double& timestamp) const
+yarp::dev::ReturnValue Imu_nwc_ros2::getThreeAxisLinearAccelerometerMeasure(size_t sens_index, yarp::sig::Vector& out, double& timestamp) const
 {
     std::lock_guard<std::mutex> dataGuard(m_dataMutex);
 
@@ -33,7 +33,7 @@ bool Imu_nwc_ros2::getThreeAxisLinearAccelerometerMeasure(size_t sens_index, yar
     if(m_internalStatus == yarp::dev::MAS_status::MAS_WAITING_FOR_FIRST_READ)
     {
         yCError(GENERICSENSOR_NWC_ROS2) << "No data received yet";
-        return false;
+        return yarp::dev::ReturnValue::return_code::return_value_error_generic;
     }
     yarp::sig::Vector accelerations(3);
     timestamp = yarpTimeFromRos2(m_currentData.header.stamp);
@@ -44,18 +44,18 @@ bool Imu_nwc_ros2::getThreeAxisLinearAccelerometerMeasure(size_t sens_index, yar
 
     out = accelerations;
 
-    return true;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
-bool Imu_nwc_ros2::getThreeAxisLinearAccelerometerName(size_t sens_index, std::string &name) const
+yarp::dev::ReturnValue Imu_nwc_ros2::getThreeAxisLinearAccelerometerName(size_t sens_index, std::string &name) const
 {
     YARP_UNUSED(sens_index);
     name = m_sensor_name;
 
-    return true;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
-bool Imu_nwc_ros2::getThreeAxisLinearAccelerometerFrameName(size_t sens_index, std::string &frameName) const
+yarp::dev::ReturnValue Imu_nwc_ros2::getThreeAxisLinearAccelerometerFrameName(size_t sens_index, std::string &frameName) const
 {
     std::lock_guard<std::mutex> dataGuard(m_dataMutex);
 
@@ -63,16 +63,17 @@ bool Imu_nwc_ros2::getThreeAxisLinearAccelerometerFrameName(size_t sens_index, s
     if(m_internalStatus == yarp::dev::MAS_status::MAS_WAITING_FOR_FIRST_READ)
     {
         yCError(GENERICSENSOR_NWC_ROS2) << "No data received yet";
-        return false;
+        return yarp::dev::ReturnValue::return_code::return_value_error_generic;
     }
     frameName = m_currentData.header.frame_id;
 
-    return true;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
-size_t Imu_nwc_ros2::getNrOfThreeAxisLinearAccelerometers() const
+yarp::dev::ReturnValue Imu_nwc_ros2::getNrOfThreeAxisLinearAccelerometers(size_t& nr) const
 {
-    return 1;
+    nr = 1;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
 yarp::dev::MAS_status Imu_nwc_ros2::getThreeAxisLinearAccelerometerStatus(size_t sens_index) const
@@ -82,7 +83,7 @@ yarp::dev::MAS_status Imu_nwc_ros2::getThreeAxisLinearAccelerometerStatus(size_t
 // IThreeAxisLinearAccelerometers --------------------------------------------------------------------------------------------------- END //
 
 // IThreeAxisGyroscopes ----------------------------------------------------------------------------------------------------------- START //
-bool Imu_nwc_ros2::getThreeAxisGyroscopeMeasure(size_t sens_index, yarp::sig::Vector& out, double& timestamp) const
+yarp::dev::ReturnValue Imu_nwc_ros2::getThreeAxisGyroscopeMeasure(size_t sens_index, yarp::sig::Vector& out, double& timestamp) const
 {
     std::lock_guard<std::mutex> dataGuard(m_dataMutex);
 
@@ -90,7 +91,7 @@ bool Imu_nwc_ros2::getThreeAxisGyroscopeMeasure(size_t sens_index, yarp::sig::Ve
     if(m_internalStatus == yarp::dev::MAS_status::MAS_WAITING_FOR_FIRST_READ)
     {
         yCError(GENERICSENSOR_NWC_ROS2) << "No data received yet";
-        return false;
+        return yarp::dev::ReturnValue::return_code::return_value_error_generic;
     }
     yarp::sig::Vector angularVelocities(3);
     timestamp = yarpTimeFromRos2(m_currentData.header.stamp);
@@ -101,18 +102,18 @@ bool Imu_nwc_ros2::getThreeAxisGyroscopeMeasure(size_t sens_index, yarp::sig::Ve
 
     out = angularVelocities;
 
-    return true;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
-bool Imu_nwc_ros2::getThreeAxisGyroscopeName(size_t sens_index, std::string &name) const
+yarp::dev::ReturnValue Imu_nwc_ros2::getThreeAxisGyroscopeName(size_t sens_index, std::string &name) const
 {
     YARP_UNUSED(sens_index);
     name = m_sensor_name;
 
-    return true;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
-bool Imu_nwc_ros2::getThreeAxisGyroscopeFrameName(size_t sens_index, std::string &frameName) const
+yarp::dev::ReturnValue Imu_nwc_ros2::getThreeAxisGyroscopeFrameName(size_t sens_index, std::string &frameName) const
 {
     std::lock_guard<std::mutex> dataGuard(m_dataMutex);
 
@@ -120,16 +121,17 @@ bool Imu_nwc_ros2::getThreeAxisGyroscopeFrameName(size_t sens_index, std::string
     if(m_internalStatus == yarp::dev::MAS_status::MAS_WAITING_FOR_FIRST_READ)
     {
         yCError(GENERICSENSOR_NWC_ROS2) << "No data received yet";
-        return false;
+        return yarp::dev::ReturnValue::return_code::return_value_error_generic;
     }
     frameName = m_currentData.header.frame_id;
 
-    return true;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
-size_t Imu_nwc_ros2::getNrOfThreeAxisGyroscopes() const
+yarp::dev::ReturnValue Imu_nwc_ros2::getNrOfThreeAxisGyroscopes(size_t& nr) const
 {
-    return 1;
+    nr = 1;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
 yarp::dev::MAS_status Imu_nwc_ros2::getThreeAxisGyroscopeStatus(size_t sens_index) const
@@ -139,7 +141,7 @@ yarp::dev::MAS_status Imu_nwc_ros2::getThreeAxisGyroscopeStatus(size_t sens_inde
 // IThreeAxisGyroscopes ------------------------------------------------------------------------------------------------------------- END //
 
 // IOrientationSensors ------------------------------------------------------------------------------------------------------------ START //
-bool Imu_nwc_ros2::getOrientationSensorMeasureAsRollPitchYaw(size_t sens_index, yarp::sig::Vector& rpy, double& timestamp) const
+yarp::dev::ReturnValue Imu_nwc_ros2::getOrientationSensorMeasureAsRollPitchYaw(size_t sens_index, yarp::sig::Vector& rpy, double& timestamp) const
 {
     std::lock_guard<std::mutex> dataGuard(m_dataMutex);
 
@@ -147,7 +149,7 @@ bool Imu_nwc_ros2::getOrientationSensorMeasureAsRollPitchYaw(size_t sens_index, 
     if(m_internalStatus == yarp::dev::MAS_status::MAS_WAITING_FOR_FIRST_READ)
     {
         yCError(GENERICSENSOR_NWC_ROS2) << "No data received yet";
-        return false;
+        return yarp::dev::ReturnValue::return_code::return_value_error_generic;
     }
     yarp::sig::Vector orient(3);
     tf2Scalar roll, pitch, yaw;
@@ -167,18 +169,18 @@ bool Imu_nwc_ros2::getOrientationSensorMeasureAsRollPitchYaw(size_t sens_index, 
 
     rpy = orient;
 
-    return true;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
-bool Imu_nwc_ros2::getOrientationSensorName(size_t sens_index, std::string &name) const
+yarp::dev::ReturnValue Imu_nwc_ros2::getOrientationSensorName(size_t sens_index, std::string &name) const
 {
     YARP_UNUSED(sens_index);
     name = m_sensor_name;
 
-    return true;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
-bool Imu_nwc_ros2::getOrientationSensorFrameName(size_t sens_index, std::string &frameName) const
+yarp::dev::ReturnValue Imu_nwc_ros2::getOrientationSensorFrameName(size_t sens_index, std::string &frameName) const
 {
     std::lock_guard<std::mutex> dataGuard(m_dataMutex);
 
@@ -186,16 +188,17 @@ bool Imu_nwc_ros2::getOrientationSensorFrameName(size_t sens_index, std::string 
     if(m_internalStatus == yarp::dev::MAS_status::MAS_WAITING_FOR_FIRST_READ)
     {
         yCError(GENERICSENSOR_NWC_ROS2) << "No data received yet";
-        return false;
+        return yarp::dev::ReturnValue::return_code::return_value_error_generic;
     }
     frameName = m_currentData.header.frame_id;
 
-    return true;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
-size_t Imu_nwc_ros2::getNrOfOrientationSensors() const
+yarp::dev::ReturnValue Imu_nwc_ros2::getNrOfOrientationSensors(size_t& nr) const
 {
-    return 1;
+    nr = 1;
+    return yarp::dev::ReturnValue::return_code::return_value_ok;
 }
 
 yarp::dev::MAS_status Imu_nwc_ros2::getOrientationSensorStatus(size_t sens_index) const
