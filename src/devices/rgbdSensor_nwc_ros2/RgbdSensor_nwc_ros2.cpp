@@ -151,9 +151,9 @@ void RgbdSensor_nwc_ros2::saveIntrinsics(sensor_msgs::msg::CameraInfo::SharedPtr
         params.distortionModel.t1 == 0 &&
         params.distortionModel.t2 == 0)
         {
-            params.distortionModel.type = yarp::sig::YarpDistortion::YARP_DISTORTION_NONE;
+            params.distortionModel.type = yarp::sig::CameraDistortionType::YARP_DISTORTION_NONE;
         }
-        params.distortionModel.type = yarp::sig::YarpDistortion::YARP_PLUMB_BOB;
+        params.distortionModel.type = yarp::sig::CameraDistortionType::YARP_PLUMB_BOB;
         params.distortionModel.k1 = msg->d[0];
         params.distortionModel.k2 = msg->d[1];
         params.distortionModel.t1 = msg->d[2];
@@ -163,7 +163,7 @@ void RgbdSensor_nwc_ros2::saveIntrinsics(sensor_msgs::msg::CameraInfo::SharedPtr
     else
     {
         yCError(RGBDSENSOR_NWC_ROS2) << "Unsupported distortion model";
-        params.distortionModel.type = yarp::sig::YarpDistortion::YARP_UNSUPPORTED;
+        params.distortionModel.type = yarp::sig::CameraDistortionType::YARP_UNSUPPORTED;
     }
 }
 
@@ -271,12 +271,11 @@ yarp::dev::ReturnValue RgbdSensor_nwc_ros2::setRgbMirroring(bool mirror)
     return ReturnValue::return_code::return_value_error_not_implemented_by_device;
 }
 
-yarp::dev::ReturnValue RgbdSensor_nwc_ros2::getRgbIntrinsicParam(yarp::os::Property& intrinsic)
+yarp::dev::ReturnValue RgbdSensor_nwc_ros2::getRgbIntrinsicParam(yarp::sig::IntrinsicParams& intrinsic)
 {
     if (m_rgb_stamp_valid)
     {
-        intrinsic.clear();
-        m_rgb_params.toProperty(intrinsic);
+        intrinsic = m_rgb_params;
         return ReturnValue_ok;
     }
     return ReturnValue::return_code::return_value_error_not_ready;
@@ -308,12 +307,11 @@ yarp::dev::ReturnValue RgbdSensor_nwc_ros2::getDepthFOV(double& horizontalFov, d
     return ReturnValue_ok;
 }
 
-yarp::dev::ReturnValue RgbdSensor_nwc_ros2::getDepthIntrinsicParam(yarp::os::Property& intrinsic)
+yarp::dev::ReturnValue RgbdSensor_nwc_ros2::getDepthIntrinsicParam(yarp::sig::IntrinsicParams& intrinsic)
 {
     if(m_depth_stamp_valid)
     {
-        intrinsic.clear();
-        m_depth_params.toProperty(intrinsic);
+        intrinsic = m_depth_params;
         return ReturnValue_ok;
     }
     return ReturnValue::return_code::return_value_error_not_ready;
