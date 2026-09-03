@@ -68,18 +68,6 @@ private:
         DEPTH_SENSOR
     };
 
-    template <class T>
-    struct param
-    {
-        param(T& inVar, std::string inName)
-        {
-            var = &inVar;
-            parname = inName;
-        }
-        T* var;
-        std::string parname;
-    };
-
     rclcpp::Node::SharedPtr m_node;
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr rosPublisher_color;
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr rosPublisher_depth;

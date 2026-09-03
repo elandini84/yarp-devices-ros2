@@ -240,22 +240,11 @@ bool RgbdSensor_nws_ros2::setCamInfo(sensor_msgs::msg::CameraInfo& cameraInfo,
                                      const std::string& frame_id,
                                      const SensorType& sensorType)
 {
-    double phyF = 0.0;
-    double fx = 0.0;
-    double fy = 0.0;
-    double cx = 0.0;
-    double cy = 0.0;
-    double k1 = 0.0;
-    double k2 = 0.0;
-    double t1 = 0.0;
-    double t2 = 0.0;
-    double k3 = 0.0;
 
-    std::string                  distModel;
-    std::string currentSensor;
-    yarp::os::Property                camData;
-    std::vector<param<double> >  parVector;
-    bool                    ok;
+    bool                       ok;
+    std::string                distModel;
+    std::string                currentSensor;
+    yarp::sig::IntrinsicParams camData;
 
     currentSensor = sensorType == COLOR_SENSOR ? "Rgb" : "Depth";
     ok            = sensorType == COLOR_SENSOR ? sensor_p->getRgbIntrinsicParam(camData) : sensor_p->getDepthIntrinsicParam(camData);
@@ -266,35 +255,17 @@ bool RgbdSensor_nws_ros2::setCamInfo(sensor_msgs::msg::CameraInfo& cameraInfo,
         return false;
     }
 
-    if(!camData.check("distortionModel"))
+    switch (camData.distortionModel.type)
     {
-        yCWarning(RGBDSENSOR_NWS_ROS2) << "Missing distortion model";
+    case yarp::sig::CameraDistortionType::YARP_DISTORTION_NONE:
+        distModel = "none";
+        break;
+    case yarp::sig::CameraDistortionType::YARP_PLUMB_BOB:
+        distModel = "plumb_bob";
+        break;
+    default:
+        yCWarning(RGBDSENSOR_NWS_ROS2) << "Unsupported distortion model";
         return false;
-    }
-
-    distModel = camData.find("distortionModel").asString();
-
-    parVector.emplace_back(phyF,"physFocalLength");
-    parVector.emplace_back(fx,"focalLengthX");
-    parVector.emplace_back(fy,"focalLengthY");
-    parVector.emplace_back(cx,"principalPointX");
-    parVector.emplace_back(cy,"principalPointY");
-
-    if (distModel != "none")
-    {
-        parVector.emplace_back(k1,"k1");
-        parVector.emplace_back(k2,"k2");
-        parVector.emplace_back(t1,"t1");
-        parVector.emplace_back(t2,"t2");
-        parVector.emplace_back(k3,"k3");
-    }
-
-    for(auto& par : parVector) {
-        if(!camData.check(par.parname)) {
-            yCWarning(RGBDSENSOR_NWS_ROS2) << "Driver has not the param:" << par.parname;
-            return false;
-        }
-        *(par.var) = camData.find(par.parname).asFloat64();
     }
 
     cameraInfo.header.frame_id      = frame_id;
@@ -305,15 +276,15 @@ bool RgbdSensor_nws_ros2::setCamInfo(sensor_msgs::msg::CameraInfo& cameraInfo,
     if (distModel != "none")
     {
         cameraInfo.d.resize(5);
-        cameraInfo.d[0] = k1;
-        cameraInfo.d[1] = k2;
-        cameraInfo.d[2] = t1;
-        cameraInfo.d[3] = t2;
-        cameraInfo.d[4] = k3;
+        cameraInfo.d[0] = camData.distortionModel.k1;
+        cameraInfo.d[1] = camData.distortionModel.k2;
+        cameraInfo.d[2] = camData.distortionModel.t1;
+        cameraInfo.d[3] = camData.distortionModel.t2;
+        cameraInfo.d[4] = camData.distortionModel.k3;
     }
 
-    cameraInfo.k[0]  = fx;       cameraInfo.k[1] = 0;        cameraInfo.k[2] = cx;
-    cameraInfo.k[3]  = 0;        cameraInfo.k[4] = fy;       cameraInfo.k[5] = cy;
+    cameraInfo.k[0]  = camData.focalLengthX;       cameraInfo.k[1] = 0;        cameraInfo.k[2] = camData.principalPointX;
+    cameraInfo.k[3]  = 0;        cameraInfo.k[4] = camData.focalLengthY;       cameraInfo.k[5] = camData.principalPointY;
     cameraInfo.k[6]  = 0;        cameraInfo.k[7] = 0;        cameraInfo.k[8] = 1;
 
     /*
@@ -329,8 +300,8 @@ bool RgbdSensor_nws_ros2::setCamInfo(sensor_msgs::msg::CameraInfo& cameraInfo,
     cameraInfo.r[3]  = 0;        cameraInfo.r[4] = 1;        cameraInfo.r[5] = 0;
     cameraInfo.r[6]  = 0;        cameraInfo.r[7] = 0;        cameraInfo.r[8] = 1;
 
-    cameraInfo.p[0]  = fx;      cameraInfo.p[1] = 0;    cameraInfo.p[2]  = cx;  cameraInfo.p[3]  = 0;
-    cameraInfo.p[4]  = 0;       cameraInfo.p[5] = fy;   cameraInfo.p[6]  = cy;  cameraInfo.p[7]  = 0;
+    cameraInfo.p[0]  = camData.focalLengthX;      cameraInfo.p[1] = 0;    cameraInfo.p[2]  = camData.principalPointX;  cameraInfo.p[3]  = 0;
+    cameraInfo.p[4]  = 0;       cameraInfo.p[5] = camData.focalLengthY;   cameraInfo.p[6]  = camData.principalPointY;  cameraInfo.p[7]  = 0;
     cameraInfo.p[8]  = 0;       cameraInfo.p[9] = 0;    cameraInfo.p[10] = 1;   cameraInfo.p[11] = 0;
 
     cameraInfo.binning_x  = cameraInfo.binning_y = 0;
